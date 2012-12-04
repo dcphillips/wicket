@@ -72,7 +72,10 @@ public class DefaultMarkupCacheKeyProvider implements IMarkupCacheKeyProvider
 			buffer.append('_').append(locale.toString());
 		}
 
-		buffer.append('.').append(container.getMarkupType().getExtension());
+		// Add the fully specific extension including all device possibilities.
+		buffer.append('.').append(
+			DefaultMarkupResourceStreamProvider.getFullExtension(container,
+				container.getMarkupType().getExtension()));
 		return buffer.toString();
 	}
 }

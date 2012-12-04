@@ -683,7 +683,8 @@ public abstract class Component
 		getApplication().getComponentInstantiationListeners().onInstantiation(this);
 
 		final IDebugSettings debugSettings = getApplication().getDebugSettings();
-		if (debugSettings.isLinePreciseReportingOnNewComponentEnabled() && debugSettings.getComponentUseCheck())
+		if (debugSettings.isLinePreciseReportingOnNewComponentEnabled() &&
+			debugSettings.getComponentUseCheck())
 		{
 			setMetaData(CONSTRUCTED_AT_KEY,
 				ComponentStrings.toString(this, new MarkupException("constructed")));
@@ -1914,6 +1915,31 @@ public abstract class Component
 			return parent.getVariation();
 		}
 		return null;
+	}
+
+	/**
+	 * Gets the Device object of this component that will be used to look up markup for this
+	 * component. Subclasses can override this method to define by an instance what markup device
+	 * should be picked up. By default it will return null or the value of a parent.
+	 * 
+	 * @return The device of this component.
+	 */
+	public Device getDevice()
+	{
+		if (parent != null)
+		{
+			return parent.getDevice();
+		}
+
+		Session session = getSession();
+		if (session == null)
+		{
+			throw new WicketRuntimeException("Wicket Session object not available");
+		}
+
+		// This calls the Session getDevice and passes in the component such that session can
+		// implement component specific logic for device determination at a central point.
+		return session.getDevice(this);
 	}
 
 	/**

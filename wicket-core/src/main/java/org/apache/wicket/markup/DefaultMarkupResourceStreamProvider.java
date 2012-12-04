@@ -19,9 +19,12 @@ package org.apache.wicket.markup;
 import java.util.Locale;
 
 import org.apache.wicket.Application;
+import org.apache.wicket.Component;
+import org.apache.wicket.Device;
 import org.apache.wicket.MarkupContainer;
-import org.apache.wicket.util.resource.IResourceStream;
+import org.apache.wicket.Session;
 import org.apache.wicket.core.util.resource.locator.IResourceStreamLocator;
+import org.apache.wicket.util.resource.IResourceStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +81,11 @@ public class DefaultMarkupResourceStreamProvider implements IMarkupResourceStrea
 		MarkupType markupType = container.getMarkupType();
 		String ext = (markupType != null ? markupType.getExtension() : null);
 
+		if ("html".equals(ext))
+		{
+			ext = getFullExtension(container, ext);
+		}
+
 		// Markup is associated with the containers class. Walk up the class
 		// hierarchy up to MarkupContainer to find the containers markup
 		// resource.
@@ -100,5 +108,72 @@ public class DefaultMarkupResourceStreamProvider implements IMarkupResourceStrea
 		}
 
 		return null;
+	}
+
+	/**
+	 * This provides an additional method of adaptation within markup files. In addition to having
+	 * multiple version based upon locale and style, this will add multiple extension possibilities
+	 * based upon the device currently being used.<br/>
+	 * <br/>
+	 * The determination for the current device is made it two places.
+	 * <ul>
+	 * <li>{@link Component#getDevice()} will return the current device as specified by an
+	 * individual component.</li>
+	 * <li>{@link Session#getDevice()} will return the current device as specified by the entire
+	 * session.</li>
+	 * </ul>
+	 * <br/>
+	 * The Device returned will also include a fallback device (e.g. android might fall back to
+	 * mobile). The Device and its fallbacks will be built into a comma seperated list of all the
+	 * extensions.<br/>
+	 * 
+	 * This is made public to be accessible by various caching mechanisms.
+	 * 
+	 * @param container
+	 *            The MarkupContainer instance which is currently locating its markup
+	 * @param extension
+	 *            The default extension
+	 * 
+	 * @return A comma seperated list of all possible extensions, ordered from the most specific to
+	 *         the least.
+	 */
+	public static String getFullExtension(MarkupContainer container, String extension)
+	{
+		StringBuilder deviceExts = new StringBuilder();
+		deviceExts.append(extension);
+
+		Device device = null;
+
+		if (container != null)
+		{
+			// Get any component specific device
+			device = container.getDevice();
+		}
+
+		// If no component specific device, retrieve the device from session
+		if (device == null)
+		{
+			device = Session.get().getDevice();
+		}
+
+		if (device != null)
+		{
+			deviceExts = new StringBuilder();
+
+			// add specific device name extension
+			deviceExts.append(device.getKey()).append(".").append(extension).append(",");
+
+			// add all fallback device extensions
+			while (device.getFallbackDevice() != null)
+			{
+				device = device.getFallbackDevice();
+				deviceExts.append(device.getKey()).append(".").append(extension).append(",");
+			}
+
+			// add the default extension
+			deviceExts.append(extension);
+		}
+
+		return deviceExts.toString();
 	}
 }

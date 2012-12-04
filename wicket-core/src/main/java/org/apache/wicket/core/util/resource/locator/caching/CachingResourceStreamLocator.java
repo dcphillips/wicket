@@ -113,7 +113,7 @@ public class CachingResourceStreamLocator implements IResourceStreamLocator
 	public IResourceStream locate(Class<?> scope, String path, String style, String variation,
 		Locale locale, String extension, boolean strict)
 	{
-		Key key = new Key(scope.getName(), path, locale, style, variation);
+		Key key = new Key(scope.getName(), path, locale, style, variation, extension);
 		IResourceStreamReference resourceStreamReference = cache.get(key);
 
 		final IResourceStream result;

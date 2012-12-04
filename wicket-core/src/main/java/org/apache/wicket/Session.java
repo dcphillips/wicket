@@ -38,9 +38,9 @@ import org.apache.wicket.request.Request;
 import org.apache.wicket.request.cycle.RequestCycle;
 import org.apache.wicket.session.ISessionStore;
 import org.apache.wicket.settings.IApplicationSettings;
-import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.IProvider;
 import org.apache.wicket.util.LazyInitializer;
+import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Objects;
 import org.apache.wicket.util.tester.BaseWicketTester;
 import org.apache.wicket.util.time.Duration;
@@ -52,8 +52,8 @@ import org.slf4j.LoggerFactory;
  * Holds information about a user session, including some fixed number of most recent pages (and all
  * their nested component information).
  * <ul>
- * <li><b>Access</b> - the Session can be retrieved either by {@link Component#getSession()}
- * or by directly calling the static method Session.get(). All classes which extend directly or indirectly
+ * <li><b>Access</b> - the Session can be retrieved either by {@link Component#getSession()} or by
+ * directly calling the static method Session.get(). All classes which extend directly or indirectly
  * {@link org.apache.wicket.markup.html.WebMarkupContainer} can also use its convenience method
  * {@link org.apache.wicket.markup.html.WebMarkupContainer#getWebSession()}
  * 
@@ -66,18 +66,31 @@ import org.slf4j.LoggerFactory;
  * which is used within the appropriate locale. The session style ("skin") can be set with the
  * setStyle() method.
  * 
- * <li><b>Resource Loading</b> - Based on the Session locale and style, searching for resources
- * occurs in the following order (where sourcePath is set via the ApplicationSettings object for the
- * current Application, and style and locale are Session properties):
+ * <li><b>Device</b> - In addition to style and locale, resources can also have different looks
+ * based on the current device being used (i.e. Android, iPhone, etc.). The device for a session
+ * determines the look which is used within the appropriate locale and skin. The session device can
+ * be set with the setDevice() method.
+ * 
+ * <li><b>Resource Loading</b> - Based on the Session locale, style, and device, searching for
+ * resources occurs in the following order (where sourcePath is set via the ApplicationSettings
+ * object for the current Application, and style and locale are Session properties):
  * <ul>
- * 1. [sourcePath]/name[style][locale].[extension] <br>
- * 2. [sourcePath]/name[locale].[extension] <br>
- * 3. [sourcePath]/name[style].[extension] <br>
- * 4. [sourcePath]/name.[extension] <br>
- * 5. [classPath]/name[style][locale].[extension] <br>
- * 6. [classPath]/name[locale].[extension] <br>
- * 7. [classPath]/name[style].[extension] <br>
- * 8. [classPath]/name.[extension] <br>
+ * 1. [sourcePath]/name[style][locale][.device-key].[extension] <br>
+ * 2. [sourcePath]/name[style][locale].[extension] <br>
+ * 3. [sourcePath]/name[locale][.device-key].[extension] <br>
+ * 4. [sourcePath]/name[locale].[extension] <br>
+ * 5. [sourcePath]/name[style][.device-key].[extension] <br>
+ * 6. [sourcePath]/name[style].[extension] <br>
+ * 7. [sourcePath]/name[.device-key].[extension] <br>
+ * 8. [sourcePath]/name.[extension] <br>
+ * 9. [classPath]/name[style][locale][.device-key].[extension] <br>
+ * 10. [classPath]/name[style][locale].[extension] <br>
+ * 11. [classPath]/name[locale][.device-key].[extension] <br>
+ * 12. [classPath]/name[locale].[extension] <br>
+ * 13. [classPath]/name[style][.device-key].[extension] <br>
+ * 14. [classPath]/name[style].[extension] <br>
+ * 15. [classPath]/name[.device-key].[extension] <br>
+ * 16. [classPath]/name.[extension] <br>
  * </ul>
  * 
  * <li><b>Session Properties</b> - Arbitrary objects can be attached to a Session by installing a
@@ -97,9 +110,9 @@ import org.slf4j.LoggerFactory;
  * <li><b>Removal</b> - Pages can be removed from the Session forcibly by calling remove(Page) or
  * removeAll(), although such an action should rarely be necessary.
  * 
- * <li><b>Flash Messages</b> - Flash messages are messages that are stored in session and are removed
- * after they are displayed to the user. Session acts as a store for these messages because they can
- * last across requests.
+ * <li><b>Flash Messages</b> - Flash messages are messages that are stored in session and are
+ * removed after they are displayed to the user. Session acts as a store for these messages because
+ * they can last across requests.
  * 
  * @author Jonathan Locke
  * @author Eelco Hillenius
@@ -185,6 +198,9 @@ public abstract class Session implements IClusterable, IEventSink
 
 	/** Any special "skin" style to use when loading resources. */
 	private String style;
+
+	/** The current device to use when loading resources. */
+	private Device device;
 
 	/**
 	 * Holds attributes for sessions that are still temporary/ not bound to a session store. Only
@@ -454,6 +470,34 @@ public abstract class Session implements IClusterable, IEventSink
 	}
 
 	/**
+	 * Get the device (see {@link org.apache.wicket.Session}).
+	 * 
+	 * @return Returns the device (see {@link org.apache.wicket.Session})
+	 */
+	public final Device getDevice()
+	{
+		return device;
+	}
+
+	/**
+	 * Get the device (see {@link org.apache.wicket.Session}).
+	 * 
+	 * This serves as a hook point if a project wishes to implement central logic which determines
+	 * the device based off of the component.
+	 * 
+	 * Be default it returns the Session's device.
+	 * 
+	 * @param container
+	 *            The Component which is asking for its device
+	 * 
+	 * @return Returns the device (see {@link org.apache.wicket.Session})
+	 */
+	public Device getDevice(Component container)
+	{
+		return getDevice();
+	}
+
+	/**
 	 * Registers an informational feedback message for this session
 	 * 
 	 * @param message
@@ -610,6 +654,20 @@ public abstract class Session implements IClusterable, IEventSink
 	public final Session setStyle(final String style)
 	{
 		this.style = style;
+		dirty();
+		return this;
+	}
+
+	/**
+	 * Set the device (see {@link org.apache.wicket.Session}).
+	 * 
+	 * @param device
+	 *            The device to set.
+	 * @return the Session object
+	 */
+	public final Session setDevice(final Device device)
+	{
+		this.device = device;
 		dirty();
 		return this;
 	}

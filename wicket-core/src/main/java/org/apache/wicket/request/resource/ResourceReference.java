@@ -21,11 +21,11 @@ import java.util.Collections;
 import java.util.Locale;
 
 import org.apache.wicket.Application;
+import org.apache.wicket.core.util.lang.WicketObjects;
 import org.apache.wicket.markup.head.HeaderItem;
 import org.apache.wicket.util.io.IClusterable;
 import org.apache.wicket.util.lang.Args;
 import org.apache.wicket.util.lang.Objects;
-import org.apache.wicket.core.util.lang.WicketObjects;
 
 /**
  * Reference to a resource. Can be used to reference global resources.
@@ -344,6 +344,7 @@ public abstract class ResourceReference implements IClusterable
 		private final Locale locale;
 		private final String style;
 		private final String variation;
+		private final String extension;
 
 		/**
 		 * Construct.
@@ -374,6 +375,29 @@ public abstract class ResourceReference implements IClusterable
 		public Key(final String scope, final String name, final Locale locale, final String style,
 			final String variation)
 		{
+			this(scope, name, locale, style, variation, null);
+		}
+
+		/**
+		 * Additional constructor to take the extension into account for caching. The field is
+		 * optional.
+		 * 
+		 * @param scope
+		 *            resource scope
+		 * @param name
+		 *            resource name
+		 * @param locale
+		 *            resource locale
+		 * @param style
+		 *            resource style
+		 * @param variation
+		 *            resource variation
+		 * @param extension
+		 *            resource extension
+		 */
+		public Key(final String scope, final String name, final Locale locale, final String style,
+			final String variation, final String extension)
+		{
 			Args.notNull(scope, "scope");
 			Args.notNull(name, "name");
 
@@ -382,7 +406,9 @@ public abstract class ResourceReference implements IClusterable
 			this.locale = locale;
 			this.style = style != null ? style.intern() : null;
 			this.variation = variation != null ? variation.intern() : null;
+			this.extension = extension != null ? extension.intern() : null;
 		}
+
 
 		/**
 		 * @see java.lang.Object#equals(java.lang.Object)
@@ -399,11 +425,16 @@ public abstract class ResourceReference implements IClusterable
 				return false;
 			}
 			Key that = (Key)obj;
-			return Objects.equal(scope, that.scope) && //
-				Objects.equal(name, that.name) && //
-				Objects.equal(locale, that.locale) && //
-				Objects.equal(style, that.style) && //
-				Objects.equal(variation, that.variation);
+			return Objects.equal(scope, that.scope) &&
+				//
+				Objects.equal(name, that.name) &&
+				//
+				Objects.equal(locale, that.locale) &&
+				//
+				Objects.equal(style, that.style) &&
+				//
+				Objects.equal(variation, that.variation) &&
+				Objects.equal(extension, that.extension);
 		}
 
 		/**
@@ -412,7 +443,7 @@ public abstract class ResourceReference implements IClusterable
 		@Override
 		public int hashCode()
 		{
-			return Objects.hashCode(scope, name, locale, style, variation);
+			return Objects.hashCode(scope, name, locale, style, variation, extension);
 		}
 
 		/**
@@ -474,13 +505,23 @@ public abstract class ResourceReference implements IClusterable
 		}
 
 		/**
+		 * Gets extension.
+		 * 
+		 * @return extension
+		 */
+		public final String getExtension()
+		{
+			return extension;
+		}
+
+		/**
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
 		public String toString()
 		{
 			return "scope: " + scope + "; name: " + name + "; locale: " + locale + "; style: " +
-				style + "; variation: " + variation;
+				style + "; variation: " + variation + "; extension: " + extension;
 		}
 	}
 
