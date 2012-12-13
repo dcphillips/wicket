@@ -425,14 +425,10 @@ public abstract class ResourceReference implements IClusterable
 				return false;
 			}
 			Key that = (Key)obj;
-			return Objects.equal(scope, that.scope) &&
-				//
-				Objects.equal(name, that.name) &&
-				//
-				Objects.equal(locale, that.locale) &&
-				//
-				Objects.equal(style, that.style) &&
-				//
+			return Objects.equal(scope, that.scope) && //
+				Objects.equal(name, that.name) && //
+				Objects.equal(locale, that.locale) && //
+				Objects.equal(style, that.style) && //
 				Objects.equal(variation, that.variation) &&
 				Objects.equal(extension, that.extension);
 		}

@@ -58,8 +58,9 @@ public class Device implements Serializable
 	 * Constructor.
 	 * 
 	 * @param key
-	 *            The Device's key used for TODO
+	 *            The Device's key used for building the dynamic extensions when loading resources
 	 * @param fallbackDevice
+	 *		The Device which will be used if a resource is not found for this key 
 	 */
 	public Device(String key, Device fallbackDevice)
 	{
