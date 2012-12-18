@@ -14,32 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.wicket.ajax;
+package org.apache.wicket.protocol.ws.api;
+
+import org.apache.wicket.protocol.ws.api.message.IWebSocketPushMessage;
+import org.apache.wicket.util.lang.Args;
 
 /**
- * An interface for outbound communication with web socket clients
- *
- * @since 6.0
+ * Abstract class handling the Web Socket broadcast messages.
  */
-public interface IWebSocketRequestHandler
+public abstract class AbstractWebSocketConnection implements IWebSocketConnection
 {
-	/**
-	 * Pushes a text message to the client.
-	 *
-	 * @param message
-	 *      the text message to push to the client if the web socket connection is open
-	 */
-	void push(CharSequence message);
+	private final AbstractWebSocketProcessor webSocketProcessor;
 
 	/**
-	 * Pushes a binary message to the client.
+	 * Constructor.
 	 *
-	 * @param message
-	 *      the binary message to push to the client if the web socket connection is open
-	 * @param offset
-	 *      the offset to start to read from the message
-	 * @param length
-	 *      how many bytes to read from the message
+	 * @param webSocketProcessor
+	 *      the web socket processor to delegate to
 	 */
-	void push(byte[] message, int offset, int length);
+	public AbstractWebSocketConnection(AbstractWebSocketProcessor webSocketProcessor)
+	{
+		this.webSocketProcessor = Args.notNull(webSocketProcessor, "webSocketProcessor");
+	}
+
+	@Override
+	public void sendMessage(IWebSocketPushMessage message)
+	{
+		webSocketProcessor.broadcastMessage(message);
+	}
 }
